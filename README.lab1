@@ -1,0 +1,253 @@
+/////////////////////////////////////////////////////////////////
+//
+// Personuppgifter (namn, pnr, epost) på dem som gjort labben
+// Christoffer Wiss, 900201-0552, cwiss@kth.se
+// Martin Pettersson, 910127-3416, martinp4@kth.se
+
+
+/////////////////////////////////////////////////////////////////
+//
+// 1.1
+//
+// vad betyder \$* i en makefile?
+   Svar: Macrot % i makefile är den plats där parametern (filnamnet) från 
+   	 ett make-kommando hamnar. Denna kan därefter användas i reglerna 
+   	 via \$* som då ersätter dessa med inparametern (filnamnet). 
+
+// vad gör -Wall och -g ?
+   Svar: -Wall = visar alla varningar (& felmeddelanden).
+         -g    = sätter på GDB debugger så att denna kan användas när programmet körs.
+
+
+/////////////////////////////////////////////////////////////////
+//
+// 1.2 a)
+// 
+// int powerof(int x, int y) {
+//     int res = 1;
+//     for (int i = 0; i < y; i++); {
+//         res *= x;
+//     }
+//     return res;
+// }
+// 
+// int main() {
+//     int x = 10;
+//     int y = 3;
+// 
+//     int res = powerof(x, y);
+// 
+//     std::cout << x << " upphöjt till " << y << " är " << res << std::endl;
+// 
+//     float z = 0.29;
+//     int w = (int) (z * x * x);
+//     if (z * x * x == 29)
+//         std::cout << z << "*" << x * x << " är 29" << std::endl;
+//     else
+//         std::cout << z << "*" << x * x << " är inte 29" << std::endl;           
+// }
+// 
+// Varför blir värdet på variabeln w inte det man tror (0.29*100)? 
+   Svar: z, som är ett flyttal, representerar 0.29 något inexakt (0.289999999)
+         Således när multiplikationen utförs så fås produkten 28.99999999.
+         När man sedan gör en cast till int så kommer alla decimaler att slängas => 28.
+
+// Hur många varv körs for-loopen i funktionen powerof?
+   Svar: 3 gånger (däremot så kommer det block som man kan tro vara for-loopen endast att köras en gång).
+
+
+// 1.2 b)
+//
+// int must_follow_a(char * start, int length, char a, char b) {
+//     int nr = 0;
+//     for (int i = 0; i < length; i++, ++start) {
+//         if (*start == a && *(start + 1) == b) // maintainers note: DANGER!
+//             nr += 1;
+//     }
+//     return nr;
+// }
+// 
+// Dina tre testfall
+test1_must_follow_a.cpp
+test2_must_follow_a.cpp
+test3_must_follow_a.cpp
+
+// Varför är det så viktigt att testa randvillkoren?
+   Svar: Vill inte att funktion ska gå utanför den tilltänkta addressrymden
+         (undvika out of bounds), undvika oplanerat beteende. 
+
+
+/////////////////////////////////////////////////////////////////
+//
+// 1.3 
+// 
+// Bifoga källkoden till din version av A.cpp
+
+#include <iostream>
+
+class A {
+public:
+    A() 
+        {std::cout << "The default contructor" << std::endl;}
+    A(const A & ref) 
+        {std::cout << "The copy contructor" << std::endl; }
+    ~A() 
+        {std::cout << "The destructor" << std::endl; }
+    A(char * s) 
+        {std::cout << "Some other constructor " << s << std::endl;}
+    A & operator=(const A & s) 
+        {std::cout << "The assignment operator" << std::endl; 
+         return *this;}
+};
+
+void no_ref(A a) {}
+void with_ref(const A & a) {}
+
+int main()
+{
+    std::cout << "A a (\"my name is a\"); - Some other constructor anropas" << std::endl;
+    A a("my name is a"); // Some other constructor anropas
+    std::cout << std::endl;
+    
+    std::cout << "A b = a; - Copy constructor anropas" << std::endl;
+    A b = a;         	 // vad är skillnaden (copy constructor?)
+    std::cout << std::endl;
+    
+    std::cout << "A c(a); - Copy constructor anropas" << std::endl;
+    A c(a);          	 // mellan dessa (copy constructor?)
+    std::cout << std::endl;
+    
+    std::cout << "A d; - default constructor anropas" << std::endl;
+    A d;             	 // tre tekniker? (default constructor?)
+    std::cout << std::endl;
+    
+    std::cout << "d = a; - assignment constructor anropas" << std::endl;
+    d = a;	     	 // (assignment operator?)
+    std::cout << std::endl;
+
+    std::cout << "no_ref(a); - copy constructor och destructor, temporärt objekt skapas (frigörs när out of scope)" << std::endl;
+    no_ref(a);       // Bildas temporära objekt? (copy constructor, temporära objekt bildas)
+    std::cout << std::endl;
+    
+    std::cout << "with_ref(a); - inget temporärt objekt skapas" << std::endl;
+    with_ref(a);     // Bildas temporära objekt? (reference, inga temporära objekt) 
+    std::cout << std::endl;
+
+    std::cout << "A *aa = new A[5]; - default operator*5" << std::endl;
+    
+    A *aa = new A[5]; // Initialiserar 5 nya A objekt, default constructor * 5?
+    std::cout << std::endl;
+    
+    std::cout << "delete aa; - 1 destructor kall, försöker ta bort ett block men misslyckas ty a[0] pekar på en address 8 bytes in i blocket (8 bytes = long = antal element i blocket)." << std::endl;
+    // Ifall delete (aa-8); så kommer blocket att dealloceras (dvs. alla element), kommer få error i valgrind ty deallocerar av fel typ men hela blocket blir ändå deallocerat
+    // Inget minne läcks. 
+    //delete (aa-8);        // Vad kommer att hända? (kommer deallokera det objekt som aa pekar på aa[0])
+    delete aa;
+    std::cout << std::endl;
+    
+    std::cout << "Nu avslutas programmet" << std::endl;
+    
+    return 0;
+}
+
+// Vad skriver ditt program ut, var förberedd att förklara varför. 
+   Svar: See kod och kommentarer.
+
+// När frigörs objekten?
+   Svar: När funktionens scope lämnas, alt. när delete anropas.  
+
+
+// När skapas temporära objekt?
+   Svar: När hela objektet skickas med som parameter till en funktion.
+
+//   A b = a;         // vad är skillnaden
+//   A c(a);          // mellan dessa
+//   A d;             // tre tekniker?
+     Svar: Copy (syntaktiskt socker?), copy och default
+
+
+//   no_ref(a);       // Bildas temporära objekt?
+     Svar: Ja, copy constructorn används (och destruktorn).
+
+//   with_ref(a);     // Bildas temporära objekt?
+     Svar: Nej, referensvariabel används - synonym till variabel.
+
+//   delete aa;       // Vad kommer att hända
+     Svar: Undefined - Vi fick Seg.Fault eftersom försöker ta bort ett 
+     block av minnet 8 bytes inifrån blocket. 
+
+
+/////////////////////////////////////////////////////////////////
+//
+// struct Data {
+//     int x, y, z;
+// };  
+// 
+// Data ** foo(Data ** v, int x) {
+//     for (int i = 0; i < x; i++)
+//         //if (v[i] != 0)
+//             v[i] = new Data;
+//     return v;
+// }
+// 
+// int main () {
+//     const int size = 5;
+//     Data ** v = new Data * [size];
+//     Data ** p = foo(v, size);
+//     delete [] p;
+// }
+
+// Hur ser valgrinds felmeddelande ut?  
+   Svar: 
+   ==24035== Conditional jump or move depends on uninitialised value(s)
+   ==24035==    at 0x4005D0: foo(Data**, int) (in /afs/nada.kth.se/home/s/u1muw1ks/kurser/cpp/lab1/Data)
+   ==24035==    by 0x400638: main (in /afs/nada.kth.se/home/s/u1muw1ks/kurser/cpp/lab1/Data)
+   
+   ==24035==    definitely lost: 40 bytes in 1 blocks
+   ==24035==    indirectly lost: 0 bytes in 0 blocks
+
+// Blir det någon skillnad i hur mycket minne som läcker när man
+// kommenterar if-satsen?
+   Svar: ==24071==    definitely lost: 40 bytes in 1 blocks
+         ==24071==    indirectly lost: 60 bytes in 5 blocks
+
+// Borde det ha blivit någon skillnad?
+   Svar: Genom att ha kvar if-satsen så kommer inga nya initialiseringar av data
+   objekt att ske (inget nytt minne allokeras). Däremot har vi fortfarande inte
+   deallokerat det minne som pekarna upptar (därav leak warning).
+   Genom att ta bort if-satsen så gör vi bara saken värre - eftersom vi nu även
+   allokerar minne för data objekt som inte heller blir borttagna (ingen delete[]).
+
+// Varför läcker programmet fortfarande minne?
+   Svar: delete[] kommer endast att deallokera minnet för pekarna som v pekar på.
+         De element som skapas i for-loopen kommer att finnas kvar och således 
+         läcka minne.
+
+
+/////////////////////////////////////////////////////////////////
+//
+// 1.4
+//
+// Generellt är det ofta en god idé att låta konstruktorer som
+// tar ett argument deklareras som explicit. Varför? Ange ett
+// exempel där det annars kan bli dumt.
+   Svar: Ifall man inte använder explicit så kommer en implicit typkonvertering att
+         ske. Ifall explicit används och vi anropar en metod i vårt vektor objekt med en datatyp som 
+         inte matchar parametertypen så kommer vi få en exception.
+         
+         Ifall inte explicit används så kommer istället en check att göras om det finns en möjlighet
+         att konstruera ett objekt som matchar parametertypen, vilket kan leda till konstigt beteende
+         såsom att man kallar print(12) (header print(string&)) men istället skapar en tom string 
+         av längd 12 och skriver ut denna. 
+
+
+// operatorn[] måste vara en konstant medlemsfunktion i vissa
+// fall. När och varför? Hur kopierar man vektorn?
+   Svar: T.ex. när man vill säkerställa sig om att objektet inte skall modifieras, dvs. vid kall till 
+		 funktioner som ej ska kunna ändra på vektor utan endast kopiera dess element. 
+		 Ett försök att ändra ett element i vektorn kommer då att generera ett fel eftersom detta resulterar 
+		 i ett kall till non-const versionen av [].
+		
+		 Eftersom copy-assignment operatorn (och constructor) tar in en const reference till ett vektor objekt 
+		 så måste det finnas en const-version av [] eftersom man annars inte kommer kunna kopiera över elementen 
+		 till den den andra vektorn.
